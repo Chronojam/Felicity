@@ -20,4 +20,5 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float HealAmount;
+
 };

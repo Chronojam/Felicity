@@ -106,7 +106,6 @@ void AStoryCharacter::MoveForward(float Value)
 		// get forward vector
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, Value);
-		UE_LOG(LogTemp, Warning, TEXT("%f"), Value)
 		ForwardDirection = Value;
 	}
 }
