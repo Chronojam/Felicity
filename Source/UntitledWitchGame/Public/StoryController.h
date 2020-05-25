@@ -17,11 +17,12 @@ class UNTITLEDWITCHGAME_API AStoryController : public APlayerController
 public:
 	AStoryController();
 	void BeginPlay() override;
+	void Tick(float dt) override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = UI)
 	TSubclassOf<class UUserWidget> ObjectivesUIClass;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = UI)
 	TSubclassOf<class UUserWidget> PlayerStatusUIClass;
 
 	class UPlayerStatusUI* PlayerStatusUI;

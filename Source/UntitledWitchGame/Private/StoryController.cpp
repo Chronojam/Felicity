@@ -3,19 +3,33 @@
 
 #include "StoryController.h"
 #include "StoryPlayerState.h"
+#include "StoryCharacter.h"
+
 #include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+
 #include "Widgets/ObjectiveListEntry.h"
 #include "Widgets/ObjectivesUI.h"
 #include "Widgets/WaypointMarkerUI.h"
 #include "Widgets/PlayerStatusUI.h"
+
 #include "World/Objective.h"
+
 #include "Components/TextBlock.h"
 #include "Components/ListView.h"
+#include "Components/Image.h"
+
 #include "Kismet/GameplayStatics.h"
 
 AStoryController::AStoryController() {}
 
+void AStoryController::Tick(float dt) {
+	Super::Tick(dt);
+}
+
 void AStoryController::BeginPlay() {
+	Super::BeginPlay();
+
 	// Setup all the UI elements
 	if (ObjectivesUIClass == nullptr) return;
 	if (PlayerStatusUIClass == nullptr) return;
@@ -25,14 +39,16 @@ void AStoryController::BeginPlay() {
 	PlayerStatusUI = CreateWidget<UPlayerStatusUI>(this, PlayerStatusUIClass);
 	if (PlayerStatusUI == nullptr) return;
 
+
 	ObjectivesUI->AddToViewport();
 	PlayerStatusUI->AddToViewport();
-	
 	// Setup delegate bindings
 	auto State = GetPlayerState<AStoryPlayerState>();
 	if (State == nullptr) return;
-
 	State->OnStateChanged.AddDynamic(PlayerStatusUI, &UPlayerStatusUI::OnStateChanged);
+
+	auto player = GetPawn<AStoryCharacter>();
+	if (player == nullptr) return;
 
 	// Try and find all the objectives in the world.
 	TArray<AActor* > OutActors;

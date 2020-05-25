@@ -5,13 +5,18 @@
 #include "StoryPlayerState.h"
 #include "Pickups/Pickup.h"
 #include "World/Openable.h"
+#include "World/Targetable.h"
+#include "Abilities/ThrowablePotion.h"
+
 
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/BoxComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 AStoryCharacter::AStoryCharacter()
@@ -48,19 +53,45 @@ AStoryCharacter::AStoryCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	TargettingArea = CreateDefaultSubobject<UBoxComponent>(TEXT("TargettingArea"));
+	TargettingArea->OnComponentBeginOverlap.AddDynamic(this, &AStoryCharacter::TargetOverlap);
+	
+	//TargettingArea->OnComponentEndOverlap.AddDynamic(this, &AStoryCharacter::TargetEndOverlap);
+
 }
+
+void AStoryCharacter::TargetOverlap(UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult) {
+
+	UE_LOG(LogTemp, Warning, TEXT("Targetted: %s"), *OtherActor->GetName());
+	if (OtherActor->Implements<UTargetable>()) {
+		UE_LOG(LogTemp, Warning, TEXT("Targetted: %s"), *OtherActor->GetName());
+	}
+}
+void AStoryCharacter::TargetEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
+	if (OtherActor->Implements<UTargetable>()) {
+		UE_LOG(LogTemp, Warning, TEXT("UnTargetted: %s"), *OtherActor->GetName());
+	}
+}
+
 
 // Called when the game starts or when spawned
 void AStoryCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+
 }
 
 // Called every frame
 void AStoryCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -70,6 +101,8 @@ void AStoryCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("UseAbility", IE_Pressed, this, &AStoryCharacter::UseAbility);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AStoryCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AStoryCharacter::MoveRight);
@@ -82,6 +115,19 @@ void AStoryCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AStoryCharacter::LookUpAtRate);
 
 	PlayerInputComponent->BindAxis("CameraZoom", this, &AStoryCharacter::CameraZoom);
+}
+
+void AStoryCharacter::UseAbility() {
+	// Assume for now we're just using random potions
+	// TODO implement other abilities
+	auto index = UKismetMathLibrary::RandomIntegerInRange(0, Ability_RandomPotionBPS.Num() - 1);
+	auto bp = Ability_RandomPotionBPS[index];
+
+	// yolo
+	auto potion = GetWorld()->SpawnActor<AThrowablePotion>(bp, GetActorLocation() + GetActorForwardVector() * 50, GetActorRotation());
+	auto hacky = Cast<UPrimitiveComponent>(potion->GetRootComponent());
+
+	hacky->AddForce(FVector(0, 0, 100000) + GetActorForwardVector() * 100000, NAME_None, true);
 }
 
 void AStoryCharacter::TurnAtRate(float Rate)
@@ -143,14 +189,10 @@ void AStoryCharacter::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 		if (PickedUpItem == nullptr) return;
 		PickedUpItem->Pickup(State);
 		GetWorld()->DestroyActor(OtherActor);
-
-		UE_LOG(LogTemp, Warning, TEXT("Picked up: %s"), *OtherActor->GetName());
 	}
 	if (OtherActor->Implements<UOpenable>()) {
 		IOpenable* Openable = Cast<IOpenable>(OtherActor);
 		if (Openable == nullptr) return;
 		Openable->Open(State);
-
-		UE_LOG(LogTemp, Warning, TEXT("Attempted to open: %s"), *OtherActor->GetName());
 	}
 }

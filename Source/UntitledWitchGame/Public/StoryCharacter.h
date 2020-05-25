@@ -6,7 +6,6 @@
 #include "GameFramework/Character.h"
 #include "StoryCharacter.generated.h"
 
-
 UCLASS()
 class UNTITLEDWITCHGAME_API AStoryCharacter : public ACharacter
 {
@@ -26,6 +25,11 @@ class UNTITLEDWITCHGAME_API AStoryCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	float ForwardDirection;
 
+	/** Targetting Sphere **/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Targetting, meta = (AllowPrivateAccess = "true"))
+	class UBoxComponent* TargettingArea;
+
+
 public:
 	// Sets default values for this character's properties
 	AStoryCharacter();
@@ -38,6 +42,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
 
+	UPROPERTY(EditAnywhere, Category = Abilities)
+	TArray<TSubclassOf<class AThrowablePotion>> Ability_RandomPotionBPS;
+
 
 	UFUNCTION()
 		void BeginOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -47,12 +54,25 @@ public:
 			bool bFromSweep,
 			const FHitResult &SweepResult);
 
+	UFUNCTION()
+		void TargetOverlap(UPrimitiveComponent* OverlappedComponent,
+			AActor* OtherActor,
+			UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex,
+			bool bFromSweep,
+			const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void TargetEndOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	void ShowWeaponMenu();
 	void HideWeaponMenu();
+
+	void UseAbility();
 
 	UPROPERTY(VisibleAnywhere)
 	float Health;
