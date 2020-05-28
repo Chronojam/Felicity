@@ -7,7 +7,8 @@
 #include "World/Openable.h"
 #include "World/Targetable.h"
 #include "Abilities/ThrowablePotion.h"
-
+#include "Components/Targetter.h"
+#include "NPCs/FairyTargetter.h"
 
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -17,6 +18,7 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "AIController.h"
 
 // Sets default values
 AStoryCharacter::AStoryCharacter()
@@ -54,38 +56,39 @@ AStoryCharacter::AStoryCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	TargettingArea = CreateDefaultSubobject<UBoxComponent>(TEXT("TargettingArea"));
-	TargettingArea->OnComponentBeginOverlap.AddDynamic(this, &AStoryCharacter::TargetOverlap);
-	
-	//TargettingArea->OnComponentEndOverlap.AddDynamic(this, &AStoryCharacter::TargetEndOverlap);
-
+	TargetComponent = CreateDefaultSubobject<UTargetter>(TEXT("TargetComponent"));
+	TargetComponent->SetupAttachment(FollowCamera);
+	TargetComponent->InitBoxExtent(FVector(400.0f, 460.0f, 100.0f));
+	TargetComponent->SetRelativeLocation(FVector(450, 0, 0));
+	TargetComponent->OnTargetChanged.AddDynamic(this, &AStoryCharacter::NewTarget);
 }
 
-void AStoryCharacter::TargetOverlap(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex,
-	bool bFromSweep,
-	const FHitResult& SweepResult) {
-
-	UE_LOG(LogTemp, Warning, TEXT("Targetted: %s"), *OtherActor->GetName());
-	if (OtherActor->Implements<UTargetable>()) {
-		UE_LOG(LogTemp, Warning, TEXT("Targetted: %s"), *OtherActor->GetName());
+// Called when the target component gets a new target.
+void AStoryCharacter::NewTarget(AActor* Target) {
+	if (TargettingFairy == nullptr) return;
+	auto fctrl = TargettingFairy->GetController<AAIController>();
+	if (Target == nullptr) {
+		// Move back to us.
+		TargettingFairy->SetTarget(this);
+		return;
 	}
-}
-void AStoryCharacter::TargetEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) {
-	if (OtherActor->Implements<UTargetable>()) {
-		UE_LOG(LogTemp, Warning, TEXT("UnTargetted: %s"), *OtherActor->GetName());
-	}
-}
 
+	TargettingFairy->SetTarget(Target);
+	return;
+}
 
 // Called when the game starts or when spawned
 void AStoryCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
 
+	// Spawn in our targetting fairy
+	TargettingFairy = GetWorld()->SpawnActor<AFairyTargetter>(TargettingFairyBP, GetActorLocation() + FVector(0, 0, 0), FRotator::ZeroRotator);
+	//AAIController* FController = GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass(), GetActorLocation(), GetActorRotation());
+	//FController->Possess(TargettingFairy);
+
+	// Go sit above our heads.
+	TargettingFairy->SetTarget(this);
 }
 
 // Called every frame
@@ -118,6 +121,7 @@ void AStoryCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 }
 
 void AStoryCharacter::UseAbility() {
+	if (TargetComponent->CurrentTarget == nullptr) return;
 	// Assume for now we're just using random potions
 	// TODO implement other abilities
 	auto index = UKismetMathLibrary::RandomIntegerInRange(0, Ability_RandomPotionBPS.Num() - 1);
@@ -127,7 +131,11 @@ void AStoryCharacter::UseAbility() {
 	auto potion = GetWorld()->SpawnActor<AThrowablePotion>(bp, GetActorLocation() + GetActorForwardVector() * 50, GetActorRotation());
 	auto hacky = Cast<UPrimitiveComponent>(potion->GetRootComponent());
 
-	hacky->AddForce(FVector(0, 0, 100000) + GetActorForwardVector() * 100000, NAME_None, true);
+	auto A = GetActorLocation();
+	auto B = TargetComponent->CurrentTarget->GetActorLocation();
+	FVector direction = UKismetMathLibrary::GetDirectionUnitVector(A, B);
+
+	hacky->AddForce(FVector(0, 0, 50000) + direction * 50000, NAME_None, true);
 }
 
 void AStoryCharacter::TurnAtRate(float Rate)

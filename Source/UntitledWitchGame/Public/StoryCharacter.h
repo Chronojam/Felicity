@@ -19,15 +19,15 @@ class UNTITLEDWITCHGAME_API AStoryCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 
+	/** Targetting Sphere **/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Targetting, meta = (AllowPrivateAccess = "true"))
+	class UTargetter* TargetComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	float RightDirection;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	float ForwardDirection;
-
-	/** Targetting Sphere **/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Targetting, meta = (AllowPrivateAccess = "true"))
-	class UBoxComponent* TargettingArea;
 
 
 public:
@@ -45,6 +45,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = Abilities)
 	TArray<TSubclassOf<class AThrowablePotion>> Ability_RandomPotionBPS;
 
+	UPROPERTY(EditAnywhere, Category = Targetting)
+	TSubclassOf<class AFairyTargetter> TargettingFairyBP;
+
 
 	UFUNCTION()
 		void BeginOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -54,17 +57,6 @@ public:
 			bool bFromSweep,
 			const FHitResult &SweepResult);
 
-	UFUNCTION()
-		void TargetOverlap(UPrimitiveComponent* OverlappedComponent,
-			AActor* OtherActor,
-			UPrimitiveComponent* OtherComp,
-			int32 OtherBodyIndex,
-			bool bFromSweep,
-			const FHitResult& SweepResult);
-
-	UFUNCTION()
-		void TargetEndOverlap(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -73,6 +65,8 @@ protected:
 	void HideWeaponMenu();
 
 	void UseAbility();
+
+	class AActor* CurrentTarget;
 
 	UPROPERTY(VisibleAnywhere)
 	float Health;
@@ -99,6 +93,12 @@ protected:
 	/** Called for side to side input */
 	void MoveRight(float Value);
 
+	UFUNCTION()
+	void NewTarget(class AActor* Target);
+
+	
+	class AFairyTargetter* TargettingFairy;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -110,5 +110,6 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-
+	/** Returns FollowCamera subobject **/
+	FORCEINLINE class UTargetter* GetTargetComponent() const { return TargetComponent; }
 };
