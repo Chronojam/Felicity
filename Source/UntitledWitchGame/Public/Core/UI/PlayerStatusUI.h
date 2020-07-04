@@ -24,6 +24,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	class UImage *Sun_Rune;
 
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	class UImage *Broom_Weapon;
+
 
 	UFUNCTION()
 	void OnStateChanged(class AStoryPlayerState *State);

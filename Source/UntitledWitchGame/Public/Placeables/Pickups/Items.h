@@ -11,11 +11,11 @@ enum Item
 {
 	RuneKey_Moon		UMETA(DisplayName = "Moon Rune"),
 	RuneKey_Sun			UMETA(DisplayName = "Sun Rune"),
+};
 
-
-	Ability_Broom		UMETA(DisplayName = "Broom"),
-	Ability_IceWand		UMETA(DisplayName = "Ice Wand"),
-	Ability_FireWand	UMETA(DisplayName = "Fire Wand"),
-	Ability_EarthWand	UMETA(DisplayName = "Earth Wand"),
-	Ability_AirWand		UMETA(DisplayName = "Air Wand"),
+UENUM()
+enum WeaponItem
+{
+	None        UMETA(DisplayName = "None"),
+	Broom		UMETA(DisplayName = "Broom"),
 };

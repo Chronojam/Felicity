@@ -5,8 +5,9 @@
 #include "Core/StoryPlayerState.h"
 #include "Placeables/Pickups/Pickup.h"
 #include "Core/Interactables/Openable.h"
-#include "Weapons/ThrowablePotion.h"
+#include "Weapons/WeaponBroom.h"
 #include "Weapons/Weapon.h"
+#include "Placeables/Pickups/Items.h"
 #include "Character/PlayerAnimInstance.h"
 
 #include "Camera/CameraComponent.h"
@@ -62,7 +63,6 @@ AStoryCharacter::AStoryCharacter()
 void AStoryCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	IsUsingAbility = false;
 }
 
 // Called every frame
@@ -94,58 +94,38 @@ void AStoryCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAxis("CameraZoom", this, &AStoryCharacter::CameraZoom);
 }
 
-void AStoryCharacter::ThrowRandomPotion() {
-	/*auto index = UKismetMathLibrary::RandomIntegerInRange(0, Ability_RandomPotionBPS.Num() - 1);
-	auto bp = Ability_RandomPotionBPS[index];
-
-	auto animInst = Cast<UFelicityAnimInstance>(this->GetMesh()->GetAnimInstance());
-	animInst->PlayThrow();
-
-	auto potion = GetWorld()->SpawnActor<AThrowablePotion>(bp, GetActorLocation() + GetActorForwardVector() * 50, GetActorRotation());
-	potion->AttachToComponent(this->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), TEXT("RightHandSocket"));
-
-	FTimerHandle TimerHandle;
-	FTimerDelegate TimerDel;
-
-	TimerDel.BindUFunction(this, FName("ThrowFromHand"), potion);
-	GetWorldTimerManager().SetTimer(TimerHandle, TimerDel, 1.0f, false);
-	*/
-
-}
-void AStoryCharacter::ThrowFromHand(AThrowablePotion* potion) {
-	// After a second, we want the potion to detach from the hand,
-	// enable physics and then add some force.
-	/*potion->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, EDetachmentRule::KeepWorld, false));
-
-	TArray<UStaticMeshComponent*> StaticComps;
-	potion->GetComponents<UStaticMeshComponent>(StaticComps);
-	for (auto x : StaticComps) {
-		x->SetSimulatePhysics(true);
+// Dont call me, use State->EquipWeapon(Wep);
+void AStoryCharacter::EquipWeapon(WeaponItem weapon) {
+	
+	if (EquippedWeapon != nullptr) {
+		Cast<AActor>(EquippedWeapon)->Destroy();
+	}
+	//const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("WeaponItem"), true);
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *EnumPtr->GetEnumName(weapon));
+	switch (weapon) {
+	case WeaponItem::Broom:
+		// Spawn and equip the wep.
+		EquippedWeapon = GetWorld()->SpawnActor<IWeapon>(BP_Broom, FVector(0, 0, 0), FRotator::ZeroRotator);
+		break;
+	default:
+		return;
+		break;
 	}
 
-    auto potionPrim = Cast<UPrimitiveComponent>(potion->GetRootComponent());
-	auto manager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
-
-	// Launch it in the direction we re looking at.
-	// add our own speed onto it.
-	//FVector::Size()
-	auto Speed = GetMovementComponent()->Velocity.Size();
-	potionPrim->AddForce(FVector(0, 0, 5000) + manager->GetActorForwardVector() * 125000 + (3 * Speed), NAME_None, true);
-	IsUsingAbility = false;
-	*/
+	// Killin' it.
+	if (EquippedWeapon->GetMesh() == nullptr) return;
+	EquippedWeapon->GetMesh()->AttachToComponent(this->GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, EAttachmentRule::KeepWorld, true), TEXT("RightHandSocket"));
 }
 
-
 void AStoryCharacter::UseAbility() {
-	if (IsUsingAbility) return;
-	auto State = Cast<AStoryPlayerState>(this->GetPlayerState());
-	if (State == nullptr) return;
-	if (State->CurrentAbility == nullptr) return;
+	if (EquippedWeapon == nullptr) return;
+	//auto State = Cast<AStoryPlayerState>(this->GetPlayerState());
+	//if (State == nullptr) return;
 
 	auto animInst = Cast<UPlayerAnimInstance>(this->GetMesh()->GetAnimInstance());
-
+	EquippedWeapon->Primary(animInst);
 	// Use the primary Ability
-	State->CurrentAbility->Primary(animInst);
+	//State->CurrentAbility->Primary(animInst);
 	//ThrowRandomPotion();
 	//auto hacky = Cast<UPrimitiveComponent>(potion->GetRootComponent());
 

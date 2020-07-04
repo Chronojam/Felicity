@@ -22,4 +22,7 @@ void UPlayerStatusUI::OnStateChanged(AStoryPlayerState *State) {
 	if (State->Items.Contains(Item::RuneKey_Sun)) {
 		Sun_Rune->SetColorAndOpacity(FLinearColor(1, 1, 0, 1));
 	}
+	if (State->Weapons.Contains(WeaponItem::Broom)) {
+		Broom_Weapon->SetColorAndOpacity(FLinearColor(139,69,19,1));
+	}
 }

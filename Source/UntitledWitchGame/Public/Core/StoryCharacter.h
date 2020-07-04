@@ -38,17 +38,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 	float BaseLookUpRate;
 
-	UPROPERTY(EditAnywhere, Category = Abilities)
-	TArray<TSubclassOf<class AThrowablePotion>> Ability_RandomPotionBPS;
-
-	UPROPERTY(EditAnywhere, Category = Abilities)
-	bool IsUsingAbility;
-
-	UFUNCTION()
-	void ThrowRandomPotion();
-	// Timer function for releasing potion.
-	UFUNCTION()
-	void ThrowFromHand(class AThrowablePotion* potion);
+	UPROPERTY(EditAnywhere, Category = Weapons)
+	TSubclassOf<class AWeaponBroom> BP_Broom;
 
 	UFUNCTION()
 		void BeginOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -57,6 +48,10 @@ public:
 			int32 OtherBodyIndex,
 			bool bFromSweep,
 			const FHitResult &SweepResult);
+
+	UFUNCTION()
+	void EquipWeapon(enum WeaponItem weapon);
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -68,6 +63,8 @@ protected:
 	float Health;
 	UPROPERTY(VisibleAnywhere)
 	float MaxHealth;
+
+	class IWeapon *EquippedWeapon;
 
 	/** s
 	 * Called via input to turn at a given rate.

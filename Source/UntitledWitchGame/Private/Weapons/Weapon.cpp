@@ -17,3 +17,7 @@ void IWeapon::Primary(UPlayerAnimInstance* instance) {
 void IWeapon::Secondary(UPlayerAnimInstance* instance) {
 
 }
+
+UStaticMeshComponent* IWeapon::GetMesh() {
+	return nullptr;
+}

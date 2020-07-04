@@ -27,6 +27,7 @@ public:
 public:
 	virtual void Primary(class UPlayerAnimInstance* instance) override;
 	virtual void Secondary(class UPlayerAnimInstance* instance) override;
+	virtual class UStaticMeshComponent* GetMesh() override;
 	virtual FName Name() override;
 
 

@@ -49,6 +49,8 @@ void AStoryController::BeginPlay() {
 	auto player = GetPawn<AStoryCharacter>();
 	if (player == nullptr) return;
 
+	State->OnWeaponEquipped.AddDynamic(player, &AStoryCharacter::EquipWeapon);
+
 	// Try and find all the objectives in the world.
 	TArray<AActor* > OutActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AObjective::StaticClass(), OutActors);

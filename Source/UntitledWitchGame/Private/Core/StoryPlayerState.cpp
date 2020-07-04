@@ -13,15 +13,9 @@ void AStoryPlayerState::BeginPlay() {
 
 	Health = 25.0f;
 	MaxHealth = 200.0f;
+	CurrentWeapon = WeaponItem::None;
 
 	OnStateChanged.Broadcast(this);
-
-	// Just instantiate these for now
-	// so we can uniquely add them later as we pick them up.
-	BroomAbility = Cast<IWeapon>(NewObject<UWeaponBroom>());
-
-	// For now just say we've got it.
-	CurrentAbility = BroomAbility;
 }
 
 void AStoryPlayerState::AlterHealth(float a) {
@@ -35,25 +29,27 @@ void AStoryPlayerState::AlterHealth(float a) {
 }
 void AStoryPlayerState::AddItem(Item item) {
 	this->Items.AddUnique(item);
-
-	// If we pick up an ability-like item then 
-	// also allow us to use the ability immediately.
-	switch (item) {
-	case Item::Ability_Broom:
-		this->Abilites.AddUnique(BroomAbility);
-		break;
-	case Item::Ability_IceWand:
-		break;
-	case Item::Ability_FireWand:
-		break;
-	case Item::Ability_EarthWand:
-		break;
-	case Item::Ability_AirWand:
-		break;
-	default:
-		break;
-	}
-
-	// Tell all listeners that we've picked something up.
 	OnStateChanged.Broadcast(this);
+}
+
+void AStoryPlayerState::AddWeapon(WeaponItem weapon) {
+	if (!this->Weapons.Contains(weapon)) {
+		// Tell all listeners that we've picked a new weapon up.
+		OnWeaponAdded.Broadcast(weapon);
+	}
+	this->Weapons.AddUnique(weapon);
+	if (CurrentWeapon == WeaponItem::None) {
+		UE_LOG(LogTemp, Warning, TEXT("Equipping"));
+		EquipWeapon(weapon);
+	}
+}
+
+void AStoryPlayerState::EquipWeapon(WeaponItem weapon) {
+	// Check if we've actually got the weapon we're reqesting
+	// to equip
+	if (!this->Weapons.Contains(weapon)) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("Setting Current"));
+	CurrentWeapon = weapon;
+	OnWeaponEquipped.Broadcast(weapon);
 }

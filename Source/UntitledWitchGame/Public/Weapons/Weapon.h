@@ -22,5 +22,6 @@ class UNTITLEDWITCHGAME_API IWeapon
 public:
 	virtual void Primary(class UPlayerAnimInstance* instance);
 	virtual void Secondary(class UPlayerAnimInstance* instance);
+	virtual class UStaticMeshComponent* GetMesh();
 	virtual FName Name();
 };
